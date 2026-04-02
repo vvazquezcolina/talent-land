@@ -1,65 +1,158 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { itineraries } from './lib/data'
+import type { DayKey } from './lib/data'
+import { isSessionPassed } from './lib/time'
+import Header from './components/Header'
+import DayTabs from './components/DayTabs'
+import StatsBar from './components/StatsBar'
+import NowNextIndicator from './components/NowNextIndicator'
+import ShowHideControls from './components/ShowHideControls'
+import SessionList from './components/SessionList'
 
 export default function Home() {
+  const [mode, setMode] = useState<string>('relajado')
+  const [activeDay, setActiveDay] = useState<string>('martes')
+  const [completedMap, setCompletedMap] = useState<Record<string, boolean>>({})
+  const [showCompleted, setShowCompleted] = useState(false)
+  const [showPassed, setShowPassed] = useState(false)
+  const [passedMap, setPassedMap] = useState<Record<number, boolean>>({})
+
+  const itinerary = itineraries[mode]
+  const currentDay = itinerary.days.find((d) => d.key === activeDay) ?? itinerary.days[0]
+  const dayKey = currentDay.key as DayKey
+
+  // Load all completed states from localStorage on mount and when mode/day changes
+  useEffect(() => {
+    const map: Record<string, boolean> = {}
+    currentDay.sessions.forEach((session, index) => {
+      const isBreak = session.priority === 'LIBRE' || session.priority === 'DESCANSO'
+      if (isBreak) return
+      const key = `completed_${mode}_${dayKey}_${index}`
+      try {
+        const val = window.localStorage.getItem(key)
+        if (val !== null) {
+          map[key] = JSON.parse(val)
+        }
+      } catch {
+        // ignore
+      }
+    })
+    setCompletedMap(map)
+  }, [mode, dayKey, currentDay.sessions])
+
+  // Compute passed sessions based on time (updates every minute)
+  useEffect(() => {
+    function updatePassed() {
+      const map: Record<number, boolean> = {}
+      currentDay.sessions.forEach((session, index) => {
+        const isBreak = session.priority === 'LIBRE' || session.priority === 'DESCANSO'
+        if (isBreak) return
+        if (isSessionPassed(session, dayKey)) {
+          map[index] = true
+        }
+      })
+      setPassedMap(map)
+    }
+
+    updatePassed()
+    const interval = setInterval(updatePassed, 60000)
+    return () => clearInterval(interval)
+  }, [currentDay.sessions, dayKey])
+
+  const handleToggleCompleted = useCallback(
+    (index: number) => {
+      const key = `completed_${mode}_${dayKey}_${index}`
+      setCompletedMap((prev) => {
+        const newVal = !prev[key]
+        try {
+          window.localStorage.setItem(key, JSON.stringify(newVal))
+        } catch {
+          // ignore
+        }
+        return { ...prev, [key]: newVal }
+      })
+    },
+    [mode, dayKey]
+  )
+
+  // Compute counts for current day
+  const { completedCount, passedNotCompletedCount, hiddenCount } = useMemo(() => {
+    let completed = 0
+    let passedNotCompleted = 0
+
+    currentDay.sessions.forEach((session, index) => {
+      const isBreak = session.priority === 'LIBRE' || session.priority === 'DESCANSO'
+      if (isBreak) return
+      const key = `completed_${mode}_${dayKey}_${index}`
+      const isComp = !!completedMap[key]
+      const isPas = !!passedMap[index]
+
+      if (isComp) completed++
+      else if (isPas) passedNotCompleted++
+    })
+
+    let hidden = 0
+    if (!showCompleted) hidden += completed
+    if (!showPassed) hidden += passedNotCompleted
+
+    return { completedCount: completed, passedNotCompletedCount: passedNotCompleted, hiddenCount: hidden }
+  }, [currentDay.sessions, completedMap, passedMap, showCompleted, showPassed, mode, dayKey])
+
+  // Register service worker
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Service worker registration failed silently
+      })
+    }
+  }, [])
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="flex flex-col flex-1 min-h-screen">
+      <Header
+        mode={mode}
+        onModeChange={setMode}
+        description={itinerary.description}
+      />
+
+      <DayTabs
+        days={itinerary.days}
+        activeDay={activeDay}
+        onDayChange={setActiveDay}
+      />
+
+      <StatsBar
+        sessions={itinerary.stats.sessions}
+        imperdibles={itinerary.stats.imperdibles}
+        workshops={itinerary.stats.workshops}
+        breaks={itinerary.stats.breaks}
+        completedCount={completedCount}
+        hiddenCount={hiddenCount}
+      />
+
+      <NowNextIndicator sessions={currentDay.sessions} dayKey={dayKey} />
+
+      <ShowHideControls
+        showCompleted={showCompleted}
+        showPassed={showPassed}
+        completedCount={completedCount}
+        passedCount={passedNotCompletedCount}
+        onToggleCompleted={() => setShowCompleted((p) => !p)}
+        onTogglePassed={() => setShowPassed((p) => !p)}
+      />
+
+      <SessionList
+        sessions={currentDay.sessions}
+        dayKey={dayKey}
+        mode={mode}
+        completedMap={completedMap}
+        passedMap={passedMap}
+        showCompleted={showCompleted}
+        showPassed={showPassed}
+        onToggleCompleted={handleToggleCompleted}
+      />
     </div>
-  );
+  )
 }
