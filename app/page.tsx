@@ -12,7 +12,7 @@ import ShowHideControls from './components/ShowHideControls'
 import SessionList from './components/SessionList'
 
 export default function Home() {
-  const [mode, setMode] = useState<string>('relajado')
+  const [mode, setMode] = useState<string>('intensivo')
   const [activeDay, setActiveDay] = useState<string>('martes')
   const [completedMap, setCompletedMap] = useState<Record<string, boolean>>({})
   const [showCompleted, setShowCompleted] = useState(false)
