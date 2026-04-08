@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { itineraries } from './lib/data'
 import type { DayKey } from './lib/data'
 import { isSessionPassed } from './lib/time'
+import { getTodayDayKey } from './lib/time'
 import Header from './components/Header'
 import DayTabs from './components/DayTabs'
 import StatsBar from './components/StatsBar'
@@ -13,7 +14,7 @@ import SessionList from './components/SessionList'
 
 export default function Home() {
   const [mode, setMode] = useState<string>('intensivo')
-  const [activeDay, setActiveDay] = useState<string>('martes')
+  const [activeDay, setActiveDay] = useState<string>(() => getTodayDayKey())
   const [completedMap, setCompletedMap] = useState<Record<string, boolean>>({})
   const [showCompleted, setShowCompleted] = useState(false)
   const [showPassed, setShowPassed] = useState(false)

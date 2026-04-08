@@ -7,6 +7,27 @@ const DAY_DATES: Record<DayKey, string> = {
   jueves: '2026-04-09',
 }
 
+const DATE_TO_DAY: Record<string, DayKey> = {
+  '2026-04-07': 'martes',
+  '2026-04-08': 'miercoles',
+  '2026-04-09': 'jueves',
+}
+
+/**
+ * Return the DayKey that matches today in Mexico City.
+ * Falls back to the nearest event day (or martes before the event, jueves after).
+ */
+export function getTodayDayKey(): DayKey {
+  const now = nowInMexicoCity()
+  const todayStr = formatLocalDate(now)
+
+  if (DATE_TO_DAY[todayStr]) return DATE_TO_DAY[todayStr]
+
+  if (todayStr < '2026-04-07') return 'martes'
+  if (todayStr > '2026-04-09') return 'jueves'
+  return 'martes'
+}
+
 /**
  * Get the current time in Mexico City timezone as a Date object.
  */
