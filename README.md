@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Talent Land 2026 — Personal Itinerary
 
-## Getting Started
+> A tiny Next.js 16 + React 19 PWA I built for myself to navigate Talent Land 2026 in Guadalajara. It auto-detects the current day, surfaces the talks I care about, and works offline on the conference Wi-Fi (which, predictably, was terrible).
 
-First, run the development server:
+**Live:** [talent-land.vercel.app](https://talent-land.vercel.app)
+
+![Next.js](https://img.shields.io/badge/Next.js-16-000)
+![React](https://img.shields.io/badge/React-19-61dafb)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
+
+---
+
+## Why this exists
+
+Talent Land publishes its schedule as a maze-like PDF. I wanted three things the PDF couldn't give me:
+
+1. **Auto-detect today** — I open the app, it shows me today's talks, no tab-hunting.
+2. **Offline** — the venue's Wi-Fi is unreliable; the app had to work with zero bars.
+3. **Only what matters** — filtered to tracks I actually attend.
+
+Built the night before the conference. Shipped to Vercel in one commit.
+
+## Features
+
+- **Date-aware home page** — on load, picks the current conference day automatically
+- **Offline-ready** — the app shell and schedule data cache for airplane-mode use
+- **Zero dependencies beyond Next / React** — no UI library, no state manager
+- **Tailwind CSS v4** — zero-config, CSS-first styling
+- **One-commit deploy** — Vercel project, no env vars, no backend
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19 + Tailwind CSS 4 |
+| Data | Static JSON (the conference schedule) |
+| Hosting | Vercel |
+
+## Running locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/vvazquezcolina/talent-land.git
+cd talent-land
+npm install
+npm run dev   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command | Description |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Status
 
-## Learn More
+Event-specific. Kept online as a reference — feel free to fork it for your own conference.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Author:** [Victor Vazquez](https://github.com/vvazquezcolina) — Cancún MX.
